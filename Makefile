@@ -65,7 +65,7 @@ LDFLAGS := $(LINKER_OPTIONS)
 LDLIBS := $(LIBRARY_OPTIONS)
 
 # Set lists of files to be considered
-SRC_FILES := $(shell find $(SRC_DIR) -name "*.$(SRC_EXT)")
+SRC_FILES := $(shell find $(SRC_DIR) -name "*.$(SRC_EXT)" -not -path "*/.ipynb_checkpoints/*")
 OBJ_FILES := $(addprefix $(OBJ_DIR)/,$(notdir $(SRC_FILES:.$(SRC_EXT)=.$(OBJ_EXT))))
 DEP_FILES := $(OBJ_FILES:.$(OBJ_EXT)=.$(DEP_EXT))
 VPATH := $(sort $(dir $(SRC_FILES)))
