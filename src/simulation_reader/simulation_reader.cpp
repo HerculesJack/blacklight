@@ -535,6 +535,8 @@ double SimulationReader::Read(int snapshot)
         ind_bb2 = 8;
         ind_bb3 = 9;
       }
+      std::cout << "Reading raw data begins." << std::endl;
+      double time_harm3d = omp_get_wtime();
       for (int i = 0; i < x1v.n1; i++)
         for (int j = 0; j < x2v.n1; j++)
           for (int k = 0; k < x3v.n1; k++)
@@ -553,11 +555,17 @@ double SimulationReader::Read(int snapshot)
             if (plasma_model == PlasmaModel::code_kappa)
               ReadBinary(&data_stream, &prim[n](ind_kappa,0,k,j,i));
           }
+      std::cout << "Reading raw data ends. Elapsed time:\t" << omp_get_wtime() - time_harm3d;
+      std::cout << " s" << std::endl;
       for (int k = 0; k < x3v.n1; k++)
         for (int j = 0; j < x2v.n1; j++)
           for (int i = 0; i < x1v.n1; i++)
             prim[n](ind_pgas,0,k,j,i) *= static_cast<float>(adiabatic_gamma - 1.0);
+      std::cout << "ConvertPrimitives4 begins." << std::endl;
+      time_harm3d = omp_get_wtime();
       ConvertPrimitives4(prim[n]);
+      std::cout << "ConvertPrimitives4 ends. Elapsed time:\t" << omp_get_wtime() - time_harm3d;
+      std::cout << " s" << std::endl;
     }
 
     // Close input file
