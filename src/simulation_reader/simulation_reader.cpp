@@ -10,7 +10,7 @@
 #include <string>    // stoi, string
 
 // Library headers
-#include <omp.h>  // omp_get_wtime
+#include <omp.h>  // pragmas, omp_get_wtime
 
 // Blacklight headers
 #include "simulation_reader.hpp"
@@ -425,6 +425,7 @@ double SimulationReader::Read(int snapshot)
         data_stream >> metric_h;
         data_stream >> temp_val;
         data_stream.seekg(1, std::ios_base::cur);
+        cell_data_address = data_stream.tellg();
         ConvertCoordinates();
       }
     }
@@ -523,6 +524,7 @@ double SimulationReader::Read(int snapshot)
         int n2 = x2v.n1;
         int n1 = x1v.n1;
         prim[n].Allocate(n5, n4, n3, n2, n1);
+        prim_transpose.Allocate(n1, n2, n3, n5 + 6);
         ind_rho = 0;
         ind_pgas = 1;
         ind_kappa = 10;
@@ -535,37 +537,32 @@ double SimulationReader::Read(int snapshot)
         ind_bb2 = 8;
         ind_bb3 = 9;
       }
+      else
+        data_stream.seekg(cell_data_address);
       std::cout << "Reading raw data begins." << std::endl;
       double time_harm3d = omp_get_wtime();
-      for (int i = 0; i < x1v.n1; i++)
-        for (int j = 0; j < x2v.n1; j++)
+      ReadBinary(&data_stream, prim_transpose.data, prim_transpose.n_tot);
+      #pragma omp parallel
+      {
+        #pragma omp for schedule(static) collapse(3)
+        for (int n_variable = 0; n_variable < prim[n].n5; n_variable++)
           for (int k = 0; k < x3v.n1; k++)
-          {
-            data_stream.seekg(6 * 4, std::ios_base::cur);
-            ReadBinary(&data_stream, &prim[n](ind_rho,0,k,j,i));
-            ReadBinary(&data_stream, &prim[n](ind_pgas,0,k,j,i));
-            ReadBinary(&data_stream, &prim[n](ind_u0,0,k,j,i));
-            ReadBinary(&data_stream, &prim[n](ind_uu1,0,k,j,i));
-            ReadBinary(&data_stream, &prim[n](ind_uu2,0,k,j,i));
-            ReadBinary(&data_stream, &prim[n](ind_uu3,0,k,j,i));
-            ReadBinary(&data_stream, &prim[n](ind_b0,0,k,j,i));
-            ReadBinary(&data_stream, &prim[n](ind_bb1,0,k,j,i));
-            ReadBinary(&data_stream, &prim[n](ind_bb2,0,k,j,i));
-            ReadBinary(&data_stream, &prim[n](ind_bb3,0,k,j,i));
-            if (plasma_model == PlasmaModel::code_kappa)
-              ReadBinary(&data_stream, &prim[n](ind_kappa,0,k,j,i));
-          }
+            for (int j = 0; j < x2v.n1; j++)
+              for (int i = 0; i < x1v.n1; i++)
+                prim[n](n_variable,0,k,j,i) = prim_transpose(i,j,k,n_variable+6);
+        #pragma omp for schedule(static) collapse(2)
+        for (int k = 0; k < x3v.n1; k++)
+          for (int j = 0; j < x2v.n1; j++)
+            for (int i = 0; i < x1v.n1; i++)
+              prim[n](ind_pgas,0,k,j,i) *= static_cast<float>(adiabatic_gamma - 1.0);
+      }
       std::cout << "Reading raw data ends. Elapsed time:\t" << omp_get_wtime() - time_harm3d;
       std::cout << " s" << std::endl;
-      for (int k = 0; k < x3v.n1; k++)
-        for (int j = 0; j < x2v.n1; j++)
-          for (int i = 0; i < x1v.n1; i++)
-            prim[n](ind_pgas,0,k,j,i) *= static_cast<float>(adiabatic_gamma - 1.0);
-      std::cout << "ConvertPrimitives4 begins." << std::endl;
-      time_harm3d = omp_get_wtime();
+      // std::cout << "ConvertPrimitives4 begins." << std::endl;
+      // time_harm3d = omp_get_wtime();
       ConvertPrimitives4(prim[n]);
-      std::cout << "ConvertPrimitives4 ends. Elapsed time:\t" << omp_get_wtime() - time_harm3d;
-      std::cout << " s" << std::endl;
+      // std::cout << "ConvertPrimitives4 ends. Elapsed time:\t" << omp_get_wtime() - time_harm3d;
+      // std::cout << " s" << std::endl;
     }
 
     // Close input file
