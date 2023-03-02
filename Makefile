@@ -81,10 +81,10 @@ $(error "$(CXX)" not supported)
 endif
 
 # Set compiler flags
-CPPFLAGS := $(DEPENDENCY_OPTIONS) $(INCLUDE_OPTIONS)
+CPPFLAGS := $(DEPENDENCY_OPTIONS) $(INCLUDE_OPTIONS) -I$(CONDA_PREFIX)/include
 CXXFLAGS := $(DIALECT_OPTIONS) $(OPTIMIZATION_OPTIONS) $(WARNING_OPTIONS)
-LDFLAGS := $(LINKER_OPTIONS)
-LDLIBS := $(LIBRARY_OPTIONS)
+LDFLAGS := $(LINKER_OPTIONS) -L$(CONDA_PREFIX)/lib
+LDLIBS := $(LIBRARY_OPTIONS) -lz
 
 # Set lists of files to be considered
 SRC_FILES := $(shell find $(SRC_DIR) -name "*.$(SRC_EXT)" -not -path "*/.ipynb_checkpoints/*")

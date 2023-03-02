@@ -55,6 +55,8 @@ OutputWriter::OutputWriter(const InputReader *p_input_reader_,
   if (output_format == OutputFormat::npz and output_camera)
     camera_type = p_input_reader->camera_type.value();
   camera_resolution = p_input_reader->camera_resolution.value();
+  use_custom_pixels = p_geodesic_integrator->use_custom_pixels;
+  camera_num_pix = p_geodesic_integrator->camera_num_pix;
 
   // Copy image parameters
   image_light = p_input_reader->image_light.value();
@@ -184,8 +186,11 @@ void OutputWriter::Write(int snapshot)
   if (output_format == OutputFormat::npz and output_camera and camera_type == Camera::plane)
   {
     camera_pos[0] = p_geodesic_integrator->camera_pos[0];
-    camera_pos[0].n3 = camera_resolution;
-    camera_pos[0].n2 = camera_resolution;
+    if (not use_custom_pixels)
+    {
+      camera_pos[0].n3 = camera_resolution;
+      camera_pos[0].n2 = camera_resolution;
+    }
     for (int level = 1; level <= adaptive_num_levels_array(0); level++)
     {
       camera_pos[level] = p_geodesic_integrator->camera_pos[level];
@@ -197,8 +202,11 @@ void OutputWriter::Write(int snapshot)
   if (output_format == OutputFormat::npz and output_camera and camera_type == Camera::pinhole)
   {
     camera_dir[0] = p_geodesic_integrator->camera_dir[0];
-    camera_dir[0].n3 = camera_resolution;
-    camera_dir[0].n2 = camera_resolution;
+    if (not use_custom_pixels)
+    {
+      camera_dir[0].n3 = camera_resolution;
+      camera_dir[0].n2 = camera_resolution;
+    }
     for (int level = 1; level <= adaptive_num_levels_array(0); level++)
     {
       camera_dir[level] = p_geodesic_integrator->camera_dir[level];
@@ -213,9 +221,12 @@ void OutputWriter::Write(int snapshot)
       or image_lambda_ave or image_emission_ave or image_tau_int or image_crossings)
   {
     image[0] = p_radiation_integrator->image[0];
-    image[0].n3 = image[0].n2;
-    image[0].n2 = camera_resolution;
-    image[0].n1 = camera_resolution;
+    if (not use_custom_pixels)
+    {
+      image[0].n3 = image[0].n2;
+      image[0].n2 = camera_resolution;
+      image[0].n1 = camera_resolution;
+    }
     for (int level = 1; level <= adaptive_num_levels_array(0); level++)
     {
       image[level] = p_radiation_integrator->image[level];
@@ -230,10 +241,13 @@ void OutputWriter::Write(int snapshot)
   if (render_num_images > 0)
   {
     render[0] = p_radiation_integrator->render[0];
-    render[0].n4 = render[0].n3;
-    render[0].n3 = render[0].n2;
-    render[0].n2 = camera_resolution;
-    render[0].n1 = camera_resolution;
+    if (not use_custom_pixels)
+    {
+      render[0].n4 = render[0].n3;
+      render[0].n3 = render[0].n2;
+      render[0].n2 = camera_resolution;
+      render[0].n1 = camera_resolution;
+    }
     for (int level = 1; level <= adaptive_num_levels_array(0); level++)
     {
       render[level] = p_radiation_integrator->render[level];

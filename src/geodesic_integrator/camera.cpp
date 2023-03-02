@@ -387,28 +387,52 @@ void GeodesicIntegrator::InitializeCamera()
   // Initialize plane-parallel camera
   if (camera_type == Camera::plane)
   {
-    #pragma omp parallel for schedule(static)
-    for (int m = 0; m < camera_num_pix; m++)
+    if (use_custom_pixels)
     {
-      int m2 = m / camera_resolution;
-      int m1 = m % camera_resolution;
-      double u_ind = (m1 - camera_resolution / 2.0 + 0.5) / camera_resolution;
-      double v_ind = (m2 - camera_resolution / 2.0 + 0.5) / camera_resolution;
-      SetPixelPlane(u_ind, v_ind, m, camera_pos[0], camera_dir[0], momentum_factors[0]);
+      #pragma omp parallel for schedule(static)
+      for (int m = 0; m < camera_num_pix; m++)
+      {
+        SetPixelPlane(custom_x_all[m] / camera_width, custom_y_all[m] / camera_width, m,
+                      camera_pos[0], camera_dir[0], momentum_factors[0]);
+      }
+    }
+    else
+    {
+      #pragma omp parallel for schedule(static)
+      for (int m = 0; m < camera_num_pix; m++)
+      {
+        int m2 = m / camera_resolution;
+        int m1 = m % camera_resolution;
+        double u_ind = (m1 - camera_resolution / 2.0 + 0.5) / camera_resolution;
+        double v_ind = (m2 - camera_resolution / 2.0 + 0.5) / camera_resolution;
+        SetPixelPlane(u_ind, v_ind, m, camera_pos[0], camera_dir[0], momentum_factors[0]);
+      }
     }
   }
 
   // Initialize pinhole camera
   if (camera_type == Camera::pinhole)
   {
-    #pragma omp parallel for schedule(static)
-    for (int m = 0; m < camera_num_pix; m++)
+    if (use_custom_pixels)
     {
-      int m2 = m / camera_resolution;
-      int m1 = m % camera_resolution;
-      double u_ind = (m1 - camera_resolution / 2.0 + 0.5) / camera_resolution;
-      double v_ind = (m2 - camera_resolution / 2.0 + 0.5) / camera_resolution;
-      SetPixelPinhole(u_ind, v_ind, m, camera_pos[0], camera_dir[0], momentum_factors[0]);
+      #pragma omp parallel for schedule(static)
+      for (int m = 0; m < camera_num_pix; m++)
+      {
+        SetPixelPinhole(custom_x_all[m] / camera_width, custom_y_all[m] / camera_width, m,
+                        camera_pos[0], camera_dir[0], momentum_factors[0]);
+      }
+    }
+    else
+    {
+      #pragma omp parallel for schedule(static)
+      for (int m = 0; m < camera_num_pix; m++)
+      {
+        int m2 = m / camera_resolution;
+        int m1 = m % camera_resolution;
+        double u_ind = (m1 - camera_resolution / 2.0 + 0.5) / camera_resolution;
+        double v_ind = (m2 - camera_resolution / 2.0 + 0.5) / camera_resolution;
+        SetPixelPinhole(u_ind, v_ind, m, camera_pos[0], camera_dir[0], momentum_factors[0]);
+      }
     }
   }
   return;

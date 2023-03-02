@@ -10,6 +10,7 @@
 #include "../blacklight.hpp"                 // enums
 #include "../input_reader/input_reader.hpp"  // InputReader
 #include "../utils/array.hpp"                // Array
+#include "../utils/cnpy.h"    // numpy io
 
 // Forward declarations
 struct RadiationIntegrator;
@@ -79,6 +80,7 @@ struct GeodesicIntegrator
   double r_terminate;
 
   // Camera data
+  bool use_custom_pixels;
   int camera_num_pix;
   double cam_x[4];
   double u_con[4], u_cov[4];
@@ -88,6 +90,8 @@ struct GeodesicIntegrator
   Array<int> *camera_loc = nullptr;
   Array<double> *camera_pos = nullptr;
   Array<double> *camera_dir = nullptr;
+  const double *custom_x_all = nullptr;
+  const double *custom_y_all = nullptr;
 
   // Image data
   Array<double> image_frequencies;

@@ -48,6 +48,8 @@ struct OutputWriter
   // Input data - camera parameters
   Camera camera_type;
   int camera_resolution;
+  bool use_custom_pixels;
+  int camera_num_pix;
 
   // Input data - image parameters
   bool image_light;

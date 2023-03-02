@@ -123,10 +123,16 @@ void OutputWriter::WriteNpz()
 
   // Write root intensity image data and metadata to buffers
   Array<double> image_deep_copy;
-  if (image_light or image_lambda_ave or image_emission_ave or image_tau_int)
-    image_deep_copy.Allocate(image_num_frequencies, camera_resolution, camera_resolution);
-  int num_pix = camera_resolution * camera_resolution;
+  int num_pix = camera_num_pix;
   int num_dims = image_num_frequencies == 1 ? 2 : 3;
+  num_dims -= use_custom_pixels ? 1 : 0;
+  if (image_light or image_lambda_ave or image_emission_ave or image_tau_int)
+  {
+    if (use_custom_pixels)
+      image_deep_copy.Allocate(image_num_frequencies, num_pix);
+    else
+      image_deep_copy.Allocate(image_num_frequencies, camera_resolution, camera_resolution);
+  }
   int image_stride =
       image_light and model_type == ModelType::simulation and image_polarization ? 4 : 1;
   if (image_light)

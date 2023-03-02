@@ -13,6 +13,7 @@
 #include "input_reader.hpp"
 #include "../blacklight.hpp"        // Math, enums
 #include "../utils/exceptions.hpp"  // BlacklightException
+#include "../utils/cnpy.h"          // numpy io
 
 // Instantiations
 template void InputReader::ReadTriple<double>(const std::string &, double *, double *, double *);
@@ -103,6 +104,10 @@ int InputReader::Read()
       model_type = ReadModelType(val);
     else if (key == "num_threads")
       num_threads = std::stoi(val);
+
+    // Store custom pixel allocation parameters
+    else if (key == "custom_pixels")
+      custom_pixels = cnpy::npz_load(val);
 
     // Store output parameters
     else if (key == "output_format")

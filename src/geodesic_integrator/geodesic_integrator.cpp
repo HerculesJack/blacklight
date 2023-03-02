@@ -123,7 +123,22 @@ GeodesicIntegrator::GeodesicIntegrator(const InputReader *p_input_reader)
     r_terminate = r_horizon + ray_factor;
 
   // Calculate number of pixels
-  camera_num_pix = camera_resolution * camera_resolution;
+  if (p_input_reader->custom_pixels)
+  {
+    if (adaptive_max_level > 0)
+      throw BlacklightException("custom_pixels must be used with adaptive_max_level=0 at this time.");
+    else
+      camera_num_pix = p_input_reader->custom_pixels.value().at("x_all").num_vals;
+    camera_width = p_input_reader->custom_pixels.value().at("camera_width").data<double>()[0];
+    custom_x_all = p_input_reader->custom_pixels.value().at("x_all").data<double>();
+    custom_y_all = p_input_reader->custom_pixels.value().at("y_all").data<double>();
+    use_custom_pixels = true;
+  }
+  else
+  {
+    camera_num_pix = camera_resolution * camera_resolution;
+    use_custom_pixels = false;
+  }
 
   // Allocate space for camera data
   camera_loc = new Array<int>[adaptive_max_level+1];
@@ -183,6 +198,8 @@ GeodesicIntegrator::~GeodesicIntegrator()
   delete[] sample_pos;
   delete[] sample_dir;
   delete[] sample_len;
+  // delete[] custom_x_all;
+  // delete[] custom_y_all;
 }
 
 //--------------------------------------------------------------------------------------------------

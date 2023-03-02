@@ -9,6 +9,7 @@
 
 // Blacklight headers
 #include "../blacklight.hpp"  // enums
+#include "../utils/cnpy.h"    // numpy io
 
 //--------------------------------------------------------------------------------------------------
 
@@ -27,6 +28,9 @@ struct InputReader
   // Data - general
   std::optional<ModelType> model_type;
   std::optional<int> num_threads;
+
+  // Data - custom pixel allocation
+  std::optional<cnpy::npz_t> custom_pixels;
 
   // Data - output parameters
   std::optional<OutputFormat> output_format;

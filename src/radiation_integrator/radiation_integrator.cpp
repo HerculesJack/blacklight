@@ -144,6 +144,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
   }
   if (render_num_images > 0)
   {
+    if (p_geodesic_integrator->use_custom_pixels)
+      throw BlacklightException("custom_pixels must be used with render_num_images=0 at this time.");
     render_num_features = new int[render_num_images];
     render_quantities = new int *[render_num_images]();
     render_types = new RenderType *[render_num_images]();
