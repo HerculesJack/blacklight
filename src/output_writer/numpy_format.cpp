@@ -23,7 +23,8 @@
 void OutputWriter::WriteNpy()
 {
   uint8_t *image_buffer;
-  std::size_t image_size = GenerateNpyFromArray(image[0], 3, &image_buffer);
+  std::size_t image_size = GenerateNpyFromArray(image[0], 3 - int(use_custom_pixels),
+                                                &image_buffer);
   char *buffer = reinterpret_cast<char *>(image_buffer);
   std::streamsize buffer_length = static_cast<std::streamsize>(image_size);
   p_output_stream->write(buffer, buffer_length);
@@ -107,14 +108,16 @@ void OutputWriter::WriteNpz()
     if (camera_type == Camera::plane)
     {
       data_lengths[array_offset] =
-          GenerateNpyFromArray(camera_pos[0], 3, &data_buffers[array_offset]);
+          GenerateNpyFromArray(camera_pos[0], 3 - int(use_custom_pixels),
+                               &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
           data_lengths[array_offset], "positions", &local_header_buffers[array_offset]);
     }
     else if (camera_type == Camera::pinhole)
     {
       data_lengths[array_offset] =
-          GenerateNpyFromArray(camera_dir[0], 3, &data_buffers[array_offset]);
+          GenerateNpyFromArray(camera_dir[0], 3 - int(use_custom_pixels),
+                               &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
           data_lengths[array_offset], "directions", &local_header_buffers[array_offset]);
     }
@@ -125,7 +128,7 @@ void OutputWriter::WriteNpz()
   Array<double> image_deep_copy;
   int num_pix = camera_num_pix;
   int num_dims = image_num_frequencies == 1 ? 2 : 3;
-  num_dims -= use_custom_pixels ? 1 : 0;
+  // num_dims -= use_custom_pixels ? 1 : 0;
   if (image_light or image_lambda_ave or image_emission_ave or image_tau_int)
   {
     if (use_custom_pixels)
@@ -139,8 +142,8 @@ void OutputWriter::WriteNpz()
   {
     for (int l = 0; l < image_num_frequencies; l++)
       image_deep_copy.CopyFrom(image[0], l * image_stride * num_pix, l * num_pix, num_pix);
-    data_lengths[array_offset] =
-        GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
+    data_lengths[array_offset] = GenerateNpyFromArray(
+        image_deep_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
     local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
         data_lengths[array_offset], "I_nu", &local_header_buffers[array_offset]);
     array_offset++;
@@ -148,22 +151,22 @@ void OutputWriter::WriteNpz()
     {
       for (int l = 0; l < image_num_frequencies; l++)
         image_deep_copy.CopyFrom(image[0], (l * image_stride + 1) * num_pix, l * num_pix, num_pix);
-      data_lengths[array_offset] =
-          GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
+      data_lengths[array_offset] = GenerateNpyFromArray(
+          image_deep_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
           data_lengths[array_offset], "Q_nu", &local_header_buffers[array_offset]);
       array_offset++;
       for (int l = 0; l < image_num_frequencies; l++)
         image_deep_copy.CopyFrom(image[0], (l * image_stride + 2) * num_pix, l * num_pix, num_pix);
-      data_lengths[array_offset] =
-          GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
+      data_lengths[array_offset] = GenerateNpyFromArray(
+          image_deep_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
           data_lengths[array_offset], "U_nu", &local_header_buffers[array_offset]);
       array_offset++;
       for (int l = 0; l < image_num_frequencies; l++)
         image_deep_copy.CopyFrom(image[0], (l * image_stride + 3) * num_pix, l * num_pix, num_pix);
-      data_lengths[array_offset] =
-          GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
+      data_lengths[array_offset] = GenerateNpyFromArray(
+          image_deep_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
           data_lengths[array_offset], "V_nu", &local_header_buffers[array_offset]);
       array_offset++;
@@ -175,9 +178,9 @@ void OutputWriter::WriteNpz()
   if (image_time)
   {
     image_shallow_copy = image[0];
-    image_shallow_copy.Slice(3, image_offset_time, image_offset_time);
-    data_lengths[array_offset] =
-        GenerateNpyFromArray(image_shallow_copy, 2, &data_buffers[array_offset]);
+    image_shallow_copy.Slice(3 - int(use_custom_pixels), image_offset_time, image_offset_time);
+    data_lengths[array_offset] = GenerateNpyFromArray(
+        image_shallow_copy, 2 - int(use_custom_pixels), &data_buffers[array_offset]);
     local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
         data_lengths[array_offset], "time", &local_header_buffers[array_offset]);
     array_offset++;
@@ -185,9 +188,9 @@ void OutputWriter::WriteNpz()
   if (image_length)
   {
     image_shallow_copy = image[0];
-    image_shallow_copy.Slice(3, image_offset_length, image_offset_length);
-    data_lengths[array_offset] =
-        GenerateNpyFromArray(image_shallow_copy, 2, &data_buffers[array_offset]);
+    image_shallow_copy.Slice(3 - int(use_custom_pixels), image_offset_length, image_offset_length);
+    data_lengths[array_offset] = GenerateNpyFromArray(
+        image_shallow_copy, 2 - int(use_custom_pixels), &data_buffers[array_offset]);
     local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
         data_lengths[array_offset], "length", &local_header_buffers[array_offset]);
     array_offset++;
@@ -195,10 +198,10 @@ void OutputWriter::WriteNpz()
   if (image_lambda)
   {
     image_shallow_copy = image[0];
-    image_shallow_copy.Slice(3, image_offset_lambda,
-        image_offset_lambda + image_num_frequencies - 1);
-    data_lengths[array_offset] =
-        GenerateNpyFromArray(image_shallow_copy, num_dims, &data_buffers[array_offset]);
+    image_shallow_copy.Slice(3 - int(use_custom_pixels), image_offset_lambda,
+                             image_offset_lambda + image_num_frequencies - 1);
+    data_lengths[array_offset] = GenerateNpyFromArray(
+        image_shallow_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
     local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
         data_lengths[array_offset], "lambda", &local_header_buffers[array_offset]);
     array_offset++;
@@ -206,10 +209,10 @@ void OutputWriter::WriteNpz()
   if (image_emission)
   {
     image_shallow_copy = image[0];
-    image_shallow_copy.Slice(3, image_offset_emission,
+    image_shallow_copy.Slice(3 - int(use_custom_pixels), image_offset_emission,
         image_offset_emission + image_num_frequencies - 1);
-    data_lengths[array_offset] =
-        GenerateNpyFromArray(image_shallow_copy, num_dims, &data_buffers[array_offset]);
+    data_lengths[array_offset] = GenerateNpyFromArray(
+        image_shallow_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
     local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
         data_lengths[array_offset], "emission", &local_header_buffers[array_offset]);
     array_offset++;
@@ -217,9 +220,10 @@ void OutputWriter::WriteNpz()
   if (image_tau)
   {
     image_shallow_copy = image[0];
-    image_shallow_copy.Slice(3, image_offset_tau, image_offset_tau + image_num_frequencies - 1);
-    data_lengths[array_offset] =
-        GenerateNpyFromArray(image_shallow_copy, num_dims, &data_buffers[array_offset]);
+    image_shallow_copy.Slice(3 - int(use_custom_pixels), image_offset_tau,
+                             image_offset_tau + image_num_frequencies - 1);
+    data_lengths[array_offset] = GenerateNpyFromArray(
+        image_shallow_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
     local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
         data_lengths[array_offset], "tau", &local_header_buffers[array_offset]);
     array_offset++;
@@ -234,8 +238,8 @@ void OutputWriter::WriteNpz()
         image_deep_copy.CopyFrom(image[0],
             (image_offset_lambda_ave + l * CellValues::num_cell_values + n) * num_pix, l * num_pix,
             num_pix);
-      data_lengths[array_offset] =
-          GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
+      data_lengths[array_offset] = GenerateNpyFromArray(
+          image_deep_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
           data_lengths[array_offset], name_buffer, &local_header_buffers[array_offset]);
       array_offset++;
@@ -251,8 +255,8 @@ void OutputWriter::WriteNpz()
         image_deep_copy.CopyFrom(image[0],
             (image_offset_emission_ave + l * CellValues::num_cell_values + n) * num_pix,
             l * num_pix, num_pix);
-      data_lengths[array_offset] =
-          GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
+      data_lengths[array_offset] = GenerateNpyFromArray(
+          image_deep_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
           data_lengths[array_offset], name_buffer, &local_header_buffers[array_offset]);
       array_offset++;
@@ -267,8 +271,8 @@ void OutputWriter::WriteNpz()
         image_deep_copy.CopyFrom(image[0],
             (image_offset_tau_int + l * CellValues::num_cell_values + n) * num_pix, l * num_pix,
             num_pix);
-      data_lengths[array_offset] =
-          GenerateNpyFromArray(image_deep_copy, num_dims, &data_buffers[array_offset]);
+      data_lengths[array_offset] = GenerateNpyFromArray(
+          image_deep_copy, num_dims - int(use_custom_pixels), &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
           data_lengths[array_offset], name_buffer, &local_header_buffers[array_offset]);
       array_offset++;
@@ -276,9 +280,10 @@ void OutputWriter::WriteNpz()
   if (image_crossings)
   {
     image_shallow_copy = image[0];
-    image_shallow_copy.Slice(3, image_offset_crossings, image_offset_crossings);
-    data_lengths[array_offset] =
-        GenerateNpyFromArray(image_shallow_copy, 2, &data_buffers[array_offset]);
+    image_shallow_copy.Slice(3 - int(use_custom_pixels), image_offset_crossings,
+                             image_offset_crossings);
+    data_lengths[array_offset] = GenerateNpyFromArray(
+        image_shallow_copy, 2 - int(use_custom_pixels), &data_buffers[array_offset]);
     local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
         data_lengths[array_offset], "crossings", &local_header_buffers[array_offset]);
     array_offset++;
