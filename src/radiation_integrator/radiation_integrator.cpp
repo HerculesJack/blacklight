@@ -59,7 +59,8 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     simulation_m_msun = p_input_reader->simulation_m_msun.value();
     simulation_rho_cgs = p_input_reader->simulation_rho_cgs.value();
     simulation_interp = p_input_reader->simulation_interp.value();
-    if (simulation_format == SimulationFormat::athena and simulation_interp)
+    if ((simulation_format == SimulationFormat::athena
+        or simulation_format == SimulationFormat::athenak) and simulation_interp)
       simulation_block_interp = p_input_reader->simulation_block_interp.value();
     else if (p_input_reader->simulation_block_interp.has_value())
       BlacklightWarning("Ignoring simulation_block_interp selection.");
@@ -278,6 +279,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     plasma_model = p_input_reader->plasma_model.value();
     if (plasma_model == PlasmaModel::ti_te_beta)
     {
+      plasma_use_p = p_input_reader->plasma_use_p.value();
       plasma_rat_low = p_input_reader->plasma_rat_low.value();
       plasma_rat_high = p_input_reader->plasma_rat_high.value();
     }

@@ -5,6 +5,7 @@
 
 // C++ headers
 #include <fstream>  // ifstream
+#include <iosfwd>   // streampos
 #include <string>   // string
 
 // Blacklight headers
@@ -37,6 +38,8 @@ struct SimulationReader
   int simulation_end;
   Coordinates simulation_coord;
   double simulation_a;
+  double simulation_m_msun;
+  double simulation_rho_cgs;
   std::string simulation_kappa_name;
 
   // Input data - slow-light parameters
@@ -46,7 +49,12 @@ struct SimulationReader
   double slow_dt;
 
   // Input data - plasma parameters
+  double plasma_mu;
   PlasmaModel plasma_model;
+  bool plasma_use_p;
+  double plasma_gamma;
+  double plasma_gamma_i;
+  double plasma_gamma_e;
 
   // Flags for tracking function calls
   bool first_time = true;
@@ -58,8 +66,23 @@ struct SimulationReader
   unsigned long int root_btree_address;
   unsigned long int root_name_heap_address;
   unsigned long int root_data_segment_address;
+  int athenak_location_size;
+  int athenak_variable_size;
+  std::streampos athenak_data_offset;
+  int athenak_ind_rho, athenak_ind_pgas, athenak_ind_kappa;
+  int athenak_ind_uu1, athenak_ind_uu2, athenak_ind_uu3;
+  int athenak_ind_bb1, athenak_ind_bb2, athenak_ind_bb3;
+  int athenak_block_nx;
+  int athenak_block_ny;
+  int athenak_block_nz;
+  int athenak_cells_per_block;
+  int athenak_block_size_bytes;
+  int athenak_num_blocks;
+  double athenak_time;
+  double *athenak_cell_data_double;
   std::string metric;
-  double metric_a, metric_h;
+  double metric_a, metric_h, metric_r_in;
+  double metric_poly_xt, metric_poly_alpha, metric_mks_smooth, metric_derived_poly_norm;
   std::ifstream::pos_type cell_data_address;
   std::string *dataset_names;
   int num_dataset_names = 0;
@@ -71,11 +94,22 @@ struct SimulationReader
   int ind_rho, ind_pgas, ind_kappa;
   int ind_u0, ind_uu1, ind_uu2, ind_uu3;
   int ind_b0, ind_bb1, ind_bb2, ind_bb3;
-  double adiabatic_gamma;
   int num_arrays;
   int latest_file_number;
   const double extrapolation_tolerance = 1.0;
   const double angular_domain_tolerance = 0.1;
+  bool gamma_set = false;
+  bool gamma_i_set = false;
+  bool gamma_e_set = false;
+
+  // Coordinate interpolation data
+  double sks_map_r_in, sks_map_r_out, sks_map_dr, sks_map_dtheta;
+  Array<double> simulation_bounds;
+  Array<double> sks_map;
+  const int sks_map_n1 = 2048;
+  const int sks_map_n2 = 2048;
+  const int sks_map_max_iter = 1000;
+  const double sks_map_tol = 1.0e-8;
 
   // Data
   int n_3_root;
@@ -93,13 +127,21 @@ struct SimulationReader
 
   // Internal functions - simulation_reader.cpp
   std::string FormatFilename(int file_number);
+  void ReadAthenaKHeader();
+  void ReadAthenaKInputs();
   void VerifyVariablesAthena();
+  void VerifyVariablesAthenaK();
   void VerifyVariablesHarm();
 
   // Internal functions - simulation_geometry.cpp
   void ConvertCoordinates();
   void ConvertPrimitives3(Array<float> &primitives);
   void ConvertPrimitives4(Array<float> &primitives);
+  void GenerateSKSMap(double r_in, double r_out);
+  void GetSKSCoordinates(double x1, double x2, double x3, double *p_r, double *p_theta,
+      double *p_phi);
+  void SetJacobianFactors(double x1, double x2, double *p_dr_dx1, double *p_dth_dx1,
+      double *p_dth_dx2);
 
   // Internal functions - hdf5_format_structure.cpp
   void ReadHDF5Superblock();
