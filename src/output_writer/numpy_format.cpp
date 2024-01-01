@@ -617,7 +617,7 @@ std::size_t OutputWriter::GenerateNpyFromArray(const Array<double> &array, int n
 {
   // Prepare buffer
   const std::size_t header_length = 128;
-  std::size_t data_length = array.GetNumBytes();
+  std::size_t data_length = array.GetNumBytes() / 2.; // ***** remove / 2. for double output *****
   std::size_t buffer_length = header_length + data_length;
   *p_buffer = new uint8_t[buffer_length];
 
@@ -638,23 +638,24 @@ std::size_t OutputWriter::GenerateNpyFromArray(const Array<double> &array, int n
   // Write header proper to buffer
   char *buffer_address = reinterpret_cast<char *>(*p_buffer + length);
   int num_written = -1;
+  // ***** change all the five <f4's below to <f8's for double output *****
   if (num_dims == 1 and array.n2 == 1 and array.n3 == 1 and array.n4 == 1 and array.n5 == 1)
     num_written = std::snprintf(buffer_address, header_length - length,
-        "{'descr': '<f8', 'fortran_order': False, 'shape': (%d,)}", array.n1);
+        "{'descr': '<f4', 'fortran_order': False, 'shape': (%d,)}", array.n1);
   else if (num_dims == 2 and array.n3 == 1 and array.n4 == 1 and array.n5 == 1)
     num_written = std::snprintf(buffer_address, header_length - length,
-        "{'descr': '<f8', 'fortran_order': False, 'shape': (%d, %d)}", array.n2, array.n1);
+        "{'descr': '<f4', 'fortran_order': False, 'shape': (%d, %d)}", array.n2, array.n1);
   else if (num_dims == 3 and array.n4 == 1 and array.n5 == 1)
     num_written = std::snprintf(buffer_address, header_length - length,
-        "{'descr': '<f8', 'fortran_order': False, 'shape': (%d, %d, %d)}", array.n3, array.n2,
+        "{'descr': '<f4', 'fortran_order': False, 'shape': (%d, %d, %d)}", array.n3, array.n2,
         array.n1);
   else if (num_dims == 4 and array.n5 == 1)
     num_written = std::snprintf(buffer_address, header_length - length,
-        "{'descr': '<f8', 'fortran_order': False, 'shape': (%d, %d, %d, %d)}", array.n4, array.n3,
+        "{'descr': '<f4', 'fortran_order': False, 'shape': (%d, %d, %d, %d)}", array.n4, array.n3,
         array.n2, array.n1);
   else if (num_dims == 5)
     num_written = std::snprintf(buffer_address, header_length - length,
-        "{'descr': '<f8', 'fortran_order': False, 'shape': (%d, %d, %d, %d, %d)}", array.n5,
+        "{'descr': '<f4', 'fortran_order': False, 'shape': (%d, %d, %d, %d, %d)}", array.n5,
         array.n4, array.n3, array.n2, array.n1);
   else
     throw BlacklightException("Attempt to truncate array while writing to .npy format.");
@@ -667,8 +668,18 @@ std::size_t OutputWriter::GenerateNpyFromArray(const Array<double> &array, int n
   (*p_buffer)[header_length-1] = '\n';
   length = header_length;
 
+  // Write array to buffer ***** double output version commented out below *****
+  // const uint8_t *data_pointer = reinterpret_cast<const uint8_t *>(array.data);
+  // std::memcpy(*p_buffer + length, data_pointer, data_length);
+  // length += data_length;
+  // return buffer_length;
+
   // Write array to buffer
-  const uint8_t *data_pointer = reinterpret_cast<const uint8_t *>(array.data);
+  Array<float> data_copy;
+  data_copy.Allocate(array.n5, array.n4, array.n3, array.n2, array.n1);
+  for (long int n = 0; n < array.n_tot; n++)
+    data_copy.data[n] = array.data[n];
+  const uint8_t *data_pointer = reinterpret_cast<const uint8_t *>(data_copy.data);
   std::memcpy(*p_buffer + length, data_pointer, data_length);
   length += data_length;
   return buffer_length;
