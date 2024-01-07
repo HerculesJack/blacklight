@@ -118,6 +118,7 @@ struct InputReader
   std::optional<bool> image_emission_ave;
   std::optional<bool> image_tau_int;
   std::optional<bool> image_crossings;
+  std::optional<bool> image_z_turnings;
 
   // Data - rendering parameters
   std::optional<int> render_num_images;
@@ -209,6 +210,7 @@ struct InputReader
   std::optional<double> cut_plane_normal_x;
   std::optional<double> cut_plane_normal_y;
   std::optional<double> cut_plane_normal_z;
+  std::optional<int> cut_z_turnings;
 
   // Data - fallback parameters
   std::optional<bool> fallback_nan;

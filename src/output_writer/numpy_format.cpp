@@ -53,7 +53,8 @@ void OutputWriter::WriteNpz()
       + (image_emission ? 1 : 0) + (image_tau ? 1 : 0)
       + (image_lambda_ave ? CellValues::num_cell_values : 0)
       + (image_emission_ave ? CellValues::num_cell_values : 0)
-      + (image_tau_int ? CellValues::num_cell_values : 0) + (image_crossings ? 1 : 0);
+      + (image_tau_int ? CellValues::num_cell_values : 0) + (image_crossings ? 1 : 0)
+      + (image_z_turnings ? 1 : 0);
   int num_full_arrays =
       (output_camera ? 1 : 0) + num_image_arrays + (render_num_images > 0 ? 1 : 0);
   int num_arrays = 3 + 1 + (adaptive_max_level > 0 ? 1 : 0) + num_full_arrays
@@ -288,6 +289,17 @@ void OutputWriter::WriteNpz()
         data_lengths[array_offset], "crossings", &local_header_buffers[array_offset]);
     array_offset++;
   }
+  if (image_z_turnings)
+  {
+    image_shallow_copy = image[0];
+    image_shallow_copy.Slice(3 - int(use_custom_pixels), image_offset_z_turnings,
+                             image_offset_z_turnings);
+    data_lengths[array_offset] = GenerateNpyFromArray(
+        image_shallow_copy, 2 - int(use_custom_pixels), &data_buffers[array_offset]);
+    local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
+        data_lengths[array_offset], "z_turnings", &local_header_buffers[array_offset]);
+    array_offset++;
+  }
   image_deep_copy.Deallocate();
 
   // Write root render data and metadata to buffers
@@ -520,6 +532,19 @@ void OutputWriter::WriteNpz()
         throw BlacklightException("Error naming output array.");
       image_shallow_copy = image[level];
       image_shallow_copy.Slice(4, image_offset_crossings, image_offset_crossings);
+      data_lengths[array_offset] =
+          GenerateNpyFromArray(image_shallow_copy, 3, &data_buffers[array_offset]);
+      local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],
+          data_lengths[array_offset], name_buffer, &local_header_buffers[array_offset]);
+      array_offset++;
+    }
+    if (image_z_turnings)
+    {
+      num_written = std::snprintf(name_buffer, max_name_length, "adaptive_z_turnings_%d", level);
+      if (num_written < 0 or num_written >= max_name_length)
+        throw BlacklightException("Error naming output array.");
+      image_shallow_copy = image[level];
+      image_shallow_copy.Slice(4, image_offset_z_turnings, image_offset_z_turnings);
       data_lengths[array_offset] =
           GenerateNpyFromArray(image_shallow_copy, 3, &data_buffers[array_offset]);
       local_header_lengths[array_offset] = GenerateZIPLocalFileHeader(data_buffers[array_offset],

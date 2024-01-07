@@ -64,6 +64,7 @@ struct OutputWriter
   bool image_emission_ave;
   bool image_tau_int;
   bool image_crossings;
+  bool image_z_turnings;
   int image_offset_time;
   int image_offset_length;
   int image_offset_lambda;
@@ -73,6 +74,7 @@ struct OutputWriter
   int image_offset_emission_ave;
   int image_offset_tau_int;
   int image_offset_crossings;
+  int image_offset_z_turnings;
 
   // Input data - rendering parameters
   int render_num_images;

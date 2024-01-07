@@ -50,13 +50,20 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
     double gcon[4][4];
 
     // Go through frequencies and pixels
-    #pragma omp for schedule(static) collapse(2)
-    for (int l = 0; l < image_num_frequencies; l++)
-      for (int m = 0; m < num_pix; m++)
-      {
-        // Extract number of steps
-        int num_steps = sample_num[adaptive_level](m);
+    #pragma omp for schedule(static)
+    for (int m = 0; m < num_pix; m++)
+    {
+      // Extract number of steps
+      int num_steps = sample_num[adaptive_level](m);
+      int n_start = -1;
+      int z_turnings_count = 0;
+      if (image_z_turnings)
+        FindZTurnings(m, num_steps, n_start, z_turnings_count);
+      if (n_start < 0)
+        n_start = 0;
 
+      for (int l = 0; l < image_num_frequencies; l++)
+      {
         // Prepare integrated quantities
         double integrated_lambda = 0.0;
         double integrated_emission = 0.0;
@@ -68,7 +75,7 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
         int crossings_count = 0;
 
         // Go through samples
-        for (int n = 0; n < num_steps; n++)
+        for (int n = n_start; n < num_steps; n++)
         {
           // Extract and calculate useful values
           double delta_lambda = sample_len[adaptive_level](m,n);
@@ -194,18 +201,14 @@ void RadiationIntegrator::IntegrateUnpolarizedRadiation()
             int index = image_offset_emission_ave + l * CellValues::num_cell_values + a;
             image[adaptive_level](index,m) /= integrated_emission;
           }
-      }
 
-    // Transform I_nu/nu^3 to I_nu
-    if (image_light)
-    {
-      #pragma omp for schedule(static) collapse(2)
-      for (int l = 0; l < image_num_frequencies; l++)
-        for (int m = 0; m < num_pix; m++)
+        // Transform I_nu/nu^3 to I_nu
+        if (image_light)
         {
           double nu_cu = image_frequencies(l) * image_frequencies(l) * image_frequencies(l);
           image[adaptive_level](l,m) *= nu_cu;
         }
+      }
     }
   }
 

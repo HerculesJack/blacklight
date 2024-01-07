@@ -83,17 +83,25 @@ void RadiationIntegrator::IntegratePolarizedRadiation()
     std::complex<double> nn_tet_cov[4][4];
     std::complex<double> nn_tet_con[4][4];
     double jacobian[4][4];
+    int n_start;
 
     // Go through frequencies and pixels
-    #pragma omp for schedule(static) collapse(2)
-    for (int l = 0; l < image_num_frequencies; l++)
-      for (int m = 0; m < num_pix; m++)
-      {
-        // Check number of steps
-        int num_steps = sample_num[adaptive_level](m);
-        if (num_steps <= 0)
-          continue;
+    #pragma omp for schedule(static)
+    for (int m = 0; m < num_pix; m++)
+    {
+      // Check number of steps
+      int num_steps = sample_num[adaptive_level](m);
+      if (num_steps <= 0)
+        continue;
+      int n_start = -1;
+      int z_turnings_count = 0;
+      if (image_z_turnings)
+        FindZTurnings(m, num_steps, n_start, z_turnings_count);
+      if (n_start < 0)
+        n_start = 0;
 
+      for (int l = 0; l < image_num_frequencies; l++)
+      {
         // Zero registers
         delta_lambda_old = 0.0;
         for (int mu = 0; mu < 4; mu++)
@@ -114,7 +122,7 @@ void RadiationIntegrator::IntegratePolarizedRadiation()
         int crossings_count = 0;
 
         // Go through samples
-        for (int n = 0; n < num_steps; n++)
+        for (int n = n_start; n < num_steps; n++)
         {
           // Extract affine step size
           double delta_lambda = sample_len[adaptive_level](m,n);
@@ -869,6 +877,7 @@ void RadiationIntegrator::IntegratePolarizedRadiation()
             image[adaptive_level](index,m) /= integrated_emission;
           }
       }
+    }
 
     // Go through pixels, transforming into camera frame
     #pragma omp for schedule(static) collapse(2)

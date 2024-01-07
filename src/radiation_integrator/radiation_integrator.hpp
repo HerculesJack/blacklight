@@ -77,6 +77,7 @@ struct RadiationIntegrator
   bool image_emission_ave;
   bool image_tau_int;
   bool image_crossings;
+  bool image_z_turnings;
 
   // Input data - rendering parameters
   int render_num_images;
@@ -163,6 +164,7 @@ struct RadiationIntegrator
   bool cut_plane;
   double cut_plane_origin_x, cut_plane_origin_y, cut_plane_origin_z;
   double cut_plane_normal_x, cut_plane_normal_y, cut_plane_normal_z;
+  int cut_z_turnings;
 
   // Input data - fallback parameters
   bool fallback_nan;
@@ -268,6 +270,7 @@ struct RadiationIntegrator
   int image_offset_emission_ave = 0;
   int image_offset_tau_int = 0;
   int image_offset_crossings = 0;
+  int image_offset_z_turnings = 0;
 
   // Rendering data
   Array<double> *render = nullptr;
@@ -329,6 +332,9 @@ struct RadiationIntegrator
 
   // Internal functions - polarized.cpp
   void IntegratePolarizedRadiation();
+
+  // Internal functions - turnings.cpp
+  void FindZTurnings(int m, int num_steps, int &n_start, int &z_turnings_count);
 
   // Internal functions - rendering.cpp
   void Render();

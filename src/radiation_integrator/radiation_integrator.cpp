@@ -132,6 +132,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_tau_int = false;
   }
   image_crossings = p_input_reader->image_crossings.value();
+  image_z_turnings = p_input_reader->image_z_turnings.value();
 
   // Copy rendering parameters
   if (model_type == ModelType::simulation)
@@ -199,7 +200,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
   }
   if (not (image_light or image_time or image_length or image_lambda or image_emission or image_tau
       or image_lambda_ave or image_emission_ave or image_tau_int or image_crossings
-      or render_num_images > 0))
+      or image_z_turnings or render_num_images > 0))
     throw BlacklightException("No image or rendering selected.");
 
   // Copy slow-light parameters
@@ -347,6 +348,14 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     cut_plane_normal_y = p_input_reader->cut_plane_normal_y.value();
     cut_plane_normal_z = p_input_reader->cut_plane_normal_z.value();
   }
+  cut_z_turnings = p_input_reader->cut_z_turnings.value();
+
+  // image_z_turnings should be true if cut_z_turnings >= set
+  if (cut_z_turnings >= 0 && !image_z_turnings)
+  {
+    BlacklightWarning("Setting image_z_turnings as true for cut_z_turnings >= 0.");
+    image_z_turnings = true;
+  }
 
   // Copy fallback parameters
   fallback_nan = p_input_reader->fallback_nan.value();
@@ -449,6 +458,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
     image_offset_crossings = image_num_quantities;
+    image_offset_z_turnings = image_num_quantities;
   }
   if (image_time)
   {
@@ -461,6 +471,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
     image_offset_crossings = image_num_quantities;
+    image_offset_z_turnings = image_num_quantities;
   }
   if (image_length)
   {
@@ -472,6 +483,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
     image_offset_crossings = image_num_quantities;
+    image_offset_z_turnings = image_num_quantities;
   }
   if (image_lambda)
   {
@@ -482,6 +494,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
     image_offset_crossings = image_num_quantities;
+    image_offset_z_turnings = image_num_quantities;
   }
   if (image_emission)
   {
@@ -491,6 +504,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
     image_offset_crossings = image_num_quantities;
+    image_offset_z_turnings = image_num_quantities;
   }
   if (image_tau)
   {
@@ -499,6 +513,7 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
     image_offset_crossings = image_num_quantities;
+    image_offset_z_turnings = image_num_quantities;
   }
   if (image_lambda_ave)
   {
@@ -506,19 +521,27 @@ RadiationIntegrator::RadiationIntegrator(const InputReader *p_input_reader,
     image_offset_emission_ave = image_num_quantities;
     image_offset_tau_int = image_num_quantities;
     image_offset_crossings = image_num_quantities;
+    image_offset_z_turnings = image_num_quantities;
   }
   if (image_emission_ave)
   {
     image_num_quantities += image_num_frequencies * CellValues::num_cell_values;
     image_offset_tau_int = image_num_quantities;
     image_offset_crossings = image_num_quantities;
+    image_offset_z_turnings = image_num_quantities;
   }
   if (image_tau_int)
   {
     image_num_quantities += image_num_frequencies * CellValues::num_cell_values;
     image_offset_crossings = image_num_quantities;
+    image_offset_z_turnings = image_num_quantities;
   }
   if (image_crossings)
+  {
+    image_num_quantities++;
+    image_offset_z_turnings = image_num_quantities;
+  }
+  if (image_z_turnings)
     image_num_quantities++;
 
   // Allocate space for rendering data
@@ -719,7 +742,8 @@ bool RadiationIntegrator::Integrate(int snapshot, double *p_time_sample, double 
     if (image_light and image_polarization)
       IntegratePolarizedRadiation();
     else if (image_light or image_time or image_length or image_lambda or image_emission
-        or image_tau or image_lambda_ave or image_emission_ave or image_tau_int or image_crossings)
+        or image_tau or image_lambda_ave or image_emission_ave or image_tau_int or image_crossings
+        or image_z_turnings)
       IntegrateUnpolarizedRadiation();
     time_image_end = omp_get_wtime();
     if (render_num_images > 0)

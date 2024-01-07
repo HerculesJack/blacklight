@@ -266,6 +266,8 @@ int InputReader::Read()
       image_tau_int = ReadBool(val);
     else if (key == "image_crossings")
       image_crossings = ReadBool(val);
+    else if (key == "image_z_turnings")
+      image_z_turnings = ReadBool(val);
 
     // Store rendering parameters
     else if (key.compare(0, 7, "render_") == 0)
@@ -400,6 +402,8 @@ int InputReader::Read()
       ReadTriple(val, &cut_plane_origin_x, &cut_plane_origin_y, &cut_plane_origin_z);
     else if (key == "cut_plane_normal")
       ReadTriple(val, &cut_plane_normal_x, &cut_plane_normal_y, &cut_plane_normal_z);
+    else if (key == "cut_z_turnings")
+      cut_z_turnings = std::stoi(val);
 
     // Store fallback parameters
     else if (key == "fallback_nan")
